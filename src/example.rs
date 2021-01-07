@@ -13,7 +13,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 	
 	println!("mongodb uri {}", env::var("MONGODB_URI").unwrap());
 	
-	let client = connect().await?;
+	let client = connect(std::env::var("MONGODB_URI").unwrap()).await?;
 	
 	println!("\nmongo client {:?}\n", client);
 	

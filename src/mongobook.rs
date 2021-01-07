@@ -5,9 +5,13 @@ use log::{log_enabled, info, Level};
 use mongodb::{Client, options::ClientOptions};
 //use mongodb::bson::{doc, Document, Bson};
 
-pub async fn connect() -> Result<Client, Box<dyn std::error::Error>>{
+/// connect to mongodb
+pub async fn connect<T>(mongodb_uri: T) -> Result<Client, Box<dyn std::error::Error>>
+where T: core::fmt::Display {
+	let mongodb_uri = format!("{}", mongodb_uri);
+
 	// parse a connection string into an options struct
-	let client_options = ClientOptions::parse(&std::env::var("MONGODB_URI").unwrap()).await?;
+	let client_options = ClientOptions::parse(&mongodb_uri).await?;
 
 	// get a handle to the deployment
 	let client = Client::with_options(client_options)?;
