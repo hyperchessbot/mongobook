@@ -40,7 +40,25 @@ where T: core::fmt::Display {
 }
 //////////////////////////////////////////////////////////////////
 
-struct MongoBook {
-	mongodb_uri: String
+pub struct MongoBook {
+	mongodb_uri: String,
+	client: Option<Client>,
 }
 
+impl MongoBook {
+	/// create new mongo book
+	pub fn new() -> MongoBook {
+		MongoBook {
+			mongodb_uri: env_string_or("MONGODB_URI", "mongodb://localhost:27017"),
+			client: None,
+		}
+	}
+
+	/// connect
+	pub async fn connect(&mut self) {
+		match connect(&self.mongodb_uri).await {
+			Ok(client) => self.client = Some(client),
+			_ => self.client = None
+		}		
+	}
+}
