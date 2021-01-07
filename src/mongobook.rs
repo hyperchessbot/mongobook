@@ -1,4 +1,4 @@
-use log::{log_enabled, info, Level};
+use log::{log_enabled, debug, info, Level};
 
 /// get environment variable with default
 pub fn env_string_or<T, D>(key: T, default: D) -> String
@@ -28,11 +28,11 @@ where T: core::fmt::Display {
 	let client = Client::with_options(client_options)?;
 
 	// list the names of the databases in that deployment
-	for db_name in client.list_database_names(None, None).await? {
+	/*for db_name in client.list_database_names(None, None).await? {
 		println!("db {}", db_name);
-	}
+	}*/
 
-	if log_enabled!(Level::Debug) {
+	if log_enabled!(Level::Info) {
 		info!("mongodb connected");
 	}		
 

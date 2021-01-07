@@ -1,3 +1,8 @@
+#[macro_use]
+extern crate log;
+
+extern crate env_logger;
+
 use dotenv::dotenv;
 use std::env;
 
@@ -8,6 +13,7 @@ use mongobook::mongobook::*;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>>{
 	dotenv().ok();
+	env_logger::init();
 	
 	println!("mongobook, under construction");
 	
