@@ -1,5 +1,16 @@
 use log::{log_enabled, info, Level};
 
+/// get environment variable with default
+pub fn env_string_or<T, D>(key: T, default: D) -> String
+where T: core::fmt::Display, D: core::fmt::Display {
+	let key = format!("{}", key);
+	let default = format!("{}", default);
+	match std::env::var(&key) {
+		Ok(value) => value,
+		_ => default
+	}
+}
+
 //////////////////////////////////////////////////////////////////
 // MongoDb
 use mongodb::{Client, options::ClientOptions};
@@ -17,9 +28,9 @@ where T: core::fmt::Display {
 	let client = Client::with_options(client_options)?;
 
 	// list the names of the databases in that deployment
-	/*for db_name in client.list_database_names(None, None).await? {
+	for db_name in client.list_database_names(None, None).await? {
 		println!("db {}", db_name);
-	}*/
+	}
 
 	if log_enabled!(Level::Debug) {
 		info!("mongodb connected");
@@ -28,3 +39,8 @@ where T: core::fmt::Display {
 	Ok(client)
 }
 //////////////////////////////////////////////////////////////////
+
+struct MongoBook {
+	mongodb_uri: String
+}
+
