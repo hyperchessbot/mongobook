@@ -6,6 +6,8 @@
 //!use dotenv::dotenv;
 //!use std::env;
 //!
+//!use pgnparse::parser::*;
+//!
 //!use mongobook::mongobook::*;
 //!
 //!#[tokio::main]
@@ -18,7 +20,11 @@
 //!	
 //!	let client = connect().await?;
 //!	
-//!	println!("mongo client {:?}", client);
+//!	println!("\nmongo client {:?}\n", client);
+//!	
+//!	let pgn = std::fs::read_to_string("test.pgn")?;
+//!	
+//!	println!("\n{:?}\n", parse_pgn_to_rust_struct(pgn));
 //!	
 //!	Ok(())
 //!}
