@@ -9,5 +9,6 @@ Mongodb hosted chess opening book. Under construction.
 ```rust
 fn main(){
 	println!("mongobook, under construction");
-}```
+}
+```
 

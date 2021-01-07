@@ -19,13 +19,13 @@ example = read_file("src/example.rs")
 parts = read_file("src/lib.rs").split("// lib\n")
 
 lib = "//!\n//! # Examples\n//!\n//!\n//!```\n"
-lib = lib + decorate(example, "//!") + "```\n\n\n// lib\n" + parts[1]
+lib = lib + decorate(example, "//!") + "\n//!```\n\n\n// lib\n" + parts[1]
 # print(lib)
 write_file("src/lib.rs", lib)
 
 parts = re.split("# Usage\n|# Logging\n", read_file("ReadMe.md"))
 
 readme = parts[0] + "# Usage\n\n```rust\n" + example
-readme = readme + "```\n\n"
+readme = readme + "\n```\n\n"
 # print(readme)
 write_file("ReadMe.md", readme)

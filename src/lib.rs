@@ -5,7 +5,8 @@
 //!```
 //!fn main(){
 //!	println!("mongobook, under construction");
-//!}```
+//!}
+//!```
 
 
 // lib
