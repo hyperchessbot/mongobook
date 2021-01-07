@@ -29,3 +29,5 @@ readme = parts[0] + "# Usage\n\n```rust\n" + example
 readme = readme + "\n```\n\n"
 # print(readme)
 write_file("ReadMe.md", readme)
+
+print("meta done")
