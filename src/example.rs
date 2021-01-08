@@ -1,12 +1,6 @@
-#![allow(unused_imports)]
-
-#[macro_use]
-extern crate log;
-
 extern crate env_logger;
 
 use dotenv::dotenv;
-use std::env;
 
 use mongobook::mongobook::*;
 
