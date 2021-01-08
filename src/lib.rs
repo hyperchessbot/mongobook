@@ -36,3 +36,4 @@
 
 // lib
 pub mod mongobook;
+pub mod models;

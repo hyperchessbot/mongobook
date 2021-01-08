@@ -6,6 +6,8 @@ use ring::{digest};
 use pgnparse::parser::*;
 use serde::{Serialize, Deserialize};
 
+use crate::models::pgnwithdigest::*;
+
 /// get environment variable as string with default
 pub fn env_string_or<T, D>(key: T, default: D) -> String
 where T: core::fmt::Display, D: core::fmt::Display {
@@ -24,95 +26,6 @@ where T: core::fmt::Display {
 	match std::env::var(&key) {
 		Ok(value) => value.parse::<usize>().unwrap_or(default),
 		_ => default
-	}
-}
-
-/// pgn with digest
-#[derive(Debug, Serialize, Deserialize)]
-struct PgnWithDigest {	
-	/// pgn as string
-	pgn_str: String,
-	/// sha256 of pgn as base64
-	#[serde(rename(serialize = "_id", deserialize = "_id"))]
-	sha256_base64: String,
-	/// processed depth
-	processed_depth: i32,
-}
-
-/// conversion macro to bson
-macro_rules! convert_to_bson {
-	($($type: ty, $typename: tt),*) => {
-		$(
-		impl From<$type> for Document {
-			fn from(item: $type) -> Self {
-		        match bson::to_bson(&item) {
-		        	Ok(bson) => {
-		        		match bson {
-		        			bson::Bson::Document(doc) => doc,
-		        			_ => {
-				        		if log_enabled!(Level::Error) {
-									error!("could not convert {} to bson ( conversion result was not a document )", $typename);
-								}		
-
-				        		doc!()
-				        	}
-		        		}
-		        	},
-		        	Err(err) => {
-		        		if log_enabled!(Level::Error) {
-							error!("could not convert {} to bson ( fatal ) {:?}", $typename, err);
-						}		
-
-		        		doc!()
-		        	}
-		        }
-		    }
-		}
-		)*
-	}
-}
-
-// generate to bson conversion
-convert_to_bson!(PgnWithDigest, "PgnWithDigest");
-
-/// conversion macro from bson
-macro_rules! convert_from_bson {
-	($($type: ty, $typename: tt),*) => {
-		$(
-		impl From<Document> for $type {
-			fn from(item: Document) -> Self {
-		        match bson::from_bson(bson::Bson::Document(item)){
-		        	Ok(result) => result,
-		        	Err(err) => {
-						panic!("could not deserialize doc to {} {:?}", $typename, err)
-		        	}
-		        }
-		    }
-		}
-		)*
-	}
-}
-
-// generate from bson conversion
-convert_from_bson!(PgnWithDigest, "PgnWithDigest");
-
-/// display pgn with digest
-impl std::fmt::Display for PgnWithDigest {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("pgn = {}\nsha256(base64) = {}\nprocessed depth = {}",
-        	self.pgn_str, self.sha256_base64, self.processed_depth
-        ))
-    }
-}
-
-/// pgn with digest from display
-impl From<&str> for PgnWithDigest {
-	fn from(pgn_str: &str) -> Self {
-		PgnWithDigest {
-			pgn_str: pgn_str.to_string(),
-			sha256_base64: base64::encode(digest::digest(&digest::SHA256, pgn_str.as_bytes()).as_ref()),
-			processed_depth: 0,
-		}
 	}
 }
 
