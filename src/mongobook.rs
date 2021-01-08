@@ -145,11 +145,25 @@ impl MongoBook {
 							moves.get_header("Result".to_string()),
 						);
 
+						let result = match moves.get_header("Result".to_string()).as_str() {
+							"1-0" => 2,
+							"0-1" => 0,
+							_ => 1
+						};
+
 						for i in process_from..process_to {
 							let m = &moves.moves[i];
 
+							let mut result_wrt = result;
+
+							let parts:Vec<&str> = m.epd_before.split(" ").collect();
+
+							if parts[1] == "b" {
+								result_wrt = 2 - result_wrt;
+							}
+
 							if log_enabled!(Level::Info) {
-								info!("adding move {}", m.san);
+								info!("adding move {} with result {} wrt {}", m.san, result, result_wrt);
 							}
 						}
 					}
