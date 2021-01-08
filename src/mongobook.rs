@@ -103,8 +103,51 @@ impl MongoBook {
 				}
 				
 				let result = pgns.find_one(doc!{"_id": pgn_with_digest.sha256_base64.to_owned()}, None).await;
+
+				let mut process_from = 0;
+
+				let processed_depth = pgn_with_digest.processed_depth as usize;
+
+				if let Ok(Some(doc)) = result {
+					let pgn_with_digest_stored:PgnWithDigest = doc.into();
+
+					if log_enabled!(Level::Info) {
+						info!("pgn already in db {} processed depth {}",
+							pgn_with_digest_stored.sha256_base64, processed_depth)
+					}
+
+					process_from = processed_depth;
+				}
+
+				let mut moves = parse_pgn_to_rust_struct(old_pgn_str);
+
+				let num = moves.moves.len();
 				
-				match result {
+				if num <= processed_depth {
+					if log_enabled!(Level::Info) {
+						info!("pgn has no moves beyond processed depth, skipping")
+					}
+				}else{
+					let mut process_to = self.book_depth;
+
+					if num < process_to {
+						process_to = num;
+					}
+
+					if log_enabled!(Level::Info) {
+						info!("pgn has unprocessed moves from {} to {}\n{} {} - {} {} {}",
+							process_from,
+							process_to,
+							moves.get_header("White".to_string()),
+							moves.get_header("WhiteElo".to_string()),
+							moves.get_header("Black".to_string()),
+							moves.get_header("BlackElo".to_string()),
+							moves.get_header("Result".to_string()),
+						);
+					}
+				}		
+				
+				/*match result {
 					Ok(Some(doc)) => {
 						let pgn_with_digest_stored:PgnWithDigest = doc.into();
 
@@ -148,7 +191,7 @@ impl MongoBook {
 							}
 						}
 					}
-				}
+				}*/
 			}
 		}
 	}
