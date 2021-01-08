@@ -106,10 +106,12 @@ impl MongoBook {
 
 				let mut process_from = 0;
 
-				let processed_depth = pgn_with_digest.processed_depth as usize;
+				let mut processed_depth = 0;
 
 				if let Ok(Some(doc)) = result {
 					let pgn_with_digest_stored:PgnWithDigest = doc.into();
+
+					processed_depth = pgn_with_digest_stored.processed_depth as usize;
 
 					if log_enabled!(Level::Info) {
 						info!("pgn already in db {} processed depth {}",
@@ -123,7 +125,7 @@ impl MongoBook {
 
 				let num = moves.moves.len();
 				
-				if num <= processed_depth {
+				if ( num <= processed_depth ) || ( processed_depth >= self.book_depth ) {
 					if log_enabled!(Level::Info) {
 						info!("pgn has no moves beyond processed depth, skipping")
 					}
