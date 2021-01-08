@@ -16,7 +16,7 @@
 //!	
 //!	println!("mongobook, under construction");
 //!
-//!	let mut mongobook = MongoBook::new().book_depth(11);
+//!	let mut mongobook = MongoBook::new().book_depth(10);
 //!
 //!	mongobook.connect().await;
 //!
