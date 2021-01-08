@@ -29,14 +29,22 @@ where T: core::fmt::Display {
 /// pgn with digest
 #[derive(Debug)]
 struct PgnWithDigest {	
+	/// pgn as string
 	pgn_str: String,
+	/// sha256 of pgn as base64
 	sha256_base64: String,
+	/// processed depth
+	processed_depth: usize,
 }
 
 /// convert pgn with digest to bson
 impl From<PgnWithDigest> for Document {
 	fn from(pgn_with_digest: PgnWithDigest) -> Self {
-        doc!{"_id": pgn_with_digest.sha256_base64, "pgn": pgn_with_digest.pgn_str}
+        doc!{
+        	"_id": pgn_with_digest.sha256_base64,
+        	"pgn": pgn_with_digest.pgn_str,
+        	"processed_depth": processed_depth,
+        }
     }
 }
 
@@ -46,6 +54,7 @@ impl From<Document> for PgnWithDigest {
         PgnWithDigest{
 			pgn_str: document.get("pgn").and_then(Bson::as_str).unwrap_or("").to_string(),
 			sha256_base64: document.get("_id").and_then(Bson::as_str).unwrap_or("").to_string(),
+			processed_depth: document.get("processed_depth").and_then(Bson::as_usize).unwrap_or(0),
 		}
     }
 }
@@ -53,7 +62,9 @@ impl From<Document> for PgnWithDigest {
 /// display pgn with digest
 impl std::fmt::Display for PgnWithDigest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("pgn = {}\nsha256(base64) = {}", self.pgn_str, self.sha256_base64))
+        f.write_fmt(format_args!("pgn = {}\nsha256(base64) = {}\nprocessed depth = {}",
+        	self.pgn_str, self.sha256_base64, self.processed_depth
+        ))
     }
 }
 
@@ -63,6 +74,7 @@ impl From<&str> for PgnWithDigest {
 		PgnWithDigest {
 			pgn_str: pgn_str.to_string(),
 			sha256_base64: base64::encode(digest::digest(&digest::SHA256, pgn_str.as_bytes()).as_ref()),
+			processed_depth: 0,
 		}
 	}
 }
