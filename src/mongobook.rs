@@ -96,7 +96,7 @@ impl MongoBook {
 			for pgn_str in items {
 				let old_pgn_str = pgn_str.to_owned();
 				
-				let pgn_with_digest:PgnWithDigest = pgn_str.into();
+				let mut pgn_with_digest:PgnWithDigest = pgn_str.into();
 				
 				if log_enabled!(Level::Info) {
 					info!("processing pgn with sha {}", pgn_with_digest.sha256_base64);
@@ -151,6 +151,8 @@ impl MongoBook {
 							_ => 1
 						};
 
+						let movecoll = db.collection("moves");
+
 						for i in process_from..process_to {
 							let m = &moves.moves[i];
 
@@ -163,7 +165,58 @@ impl MongoBook {
 							}
 
 							if log_enabled!(Level::Info) {
-								info!("adding move {} with result {} wrt {}", m.san, result, result_wrt);
+								let sha = pgn_with_digest.sha256_base64.to_owned();
+
+								let key = sha + "#" + &m.uci;
+
+								info!("adding move {} with result {} wrt {} key {}", m.san, result, result_wrt, key);
+
+								let doc = doc!{
+									"_id": key,
+									"result_wrt": result_wrt,
+								};
+
+								let result = movecoll.insert_one(doc, None).await;
+				
+								match result {
+									Ok(_) => {
+										if log_enabled!(Level::Info) {
+											info!("move inserted ok")
+										}
+									},
+									Err(err) => {
+										if log_enabled!(Level::Error) {
+											error!("inserting move failed {:?}", err)
+										}
+									}
+								}
+							}
+						}
+
+						pgn_with_digest.processed_depth = process_to as i32;
+
+						let sha = pgn_with_digest.sha256_base64.to_owned();
+
+						let doc:Document = pgn_with_digest.into();
+							
+						if log_enabled!(Level::Info) {								
+							info!("moves processed ok, updating {:?}", &doc);
+						}
+						
+						// TODO: upsert
+						let filter = doc!{"_id": sha};
+						let result = pgns.update_one(filter, doc!{"$set": doc}, None).await;
+			
+						match result {
+							Ok(_) => {
+								if log_enabled!(Level::Info) {
+									info!("pgn updated ok")
+								}
+							},
+							Err(err) => {
+								if log_enabled!(Level::Error) {
+									error!("updating pgn failed {:?}", err)
+								}
 							}
 						}
 					}
