@@ -17,8 +17,6 @@ extern crate env_logger;
 use dotenv::dotenv;
 use std::env;
 
-use pgnparse::parser::*;
-
 use mongobook::mongobook::*;
 
 #[tokio::main]
@@ -33,6 +31,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 	mongobook.connect().await;
 
 	println!("{}", mongobook);
+
+	let pgn = std::fs::read_to_string("test.pgn").unwrap();
+
+	mongobook.add_pgn_to_book(pgn).await;
 	
 	Ok(())
 }

@@ -1,8 +1,9 @@
 #![allow(unused_imports)]
 
-use log::{log_enabled, debug, info, Level};
+use log::{log_enabled, error, warn, debug, info, Level};
 use mongodb::bson::{doc, Document, Bson};
 use ring::{digest};
+use pgnparse::parser::*;
 
 /// get environment variable as string with default
 pub fn env_string_or<T, D>(key: T, default: D) -> String
@@ -120,6 +121,84 @@ impl MongoBook {
 			Ok(client) => self.client = Some(client),
 			_ => self.client = None
 		}		
+	}
+
+	/// add pgn to book
+	pub async fn add_pgn_to_book<T>(&mut self, all_pgn: T)
+	where T: core::fmt::Display {
+		let all_pgn = format!("{}", all_pgn);
+
+		if let Some(client) = &self.client {
+			if log_enabled!(Level::Info) {
+				info!("adding pgn of size {} to book", all_pgn.len());
+			}
+
+			let db = client.database("rustbook");
+			let pgns = db.collection("pgns");
+
+			let mut items:Vec<&str> = all_pgn.split("\r\n\r\n\r\n").collect();	
+			let _ = items.pop();
+
+			if log_enabled!(Level::Info) {
+				info!("number of games {}", items.len());
+			}
+			
+			for pgn_str in items {
+				let old_pgn_str = pgn_str.to_owned();
+				
+				let pgn_with_digest:PgnWithDigest = pgn_str.into();
+				
+				if log_enabled!(Level::Info) {
+					info!("processing pgn with sha {}", pgn_with_digest.sha256_base64);
+				}
+				
+				let result = pgns.find_one(doc!{"_id": pgn_with_digest.sha256_base64.to_owned()}, None).await;
+				
+				match result {
+					Ok(Some(doc)) => {
+						let pgn_with_digest_stored:PgnWithDigest = doc.into();
+
+						if log_enabled!(Level::Info) {
+							info!("pgn already in db {}", pgn_with_digest_stored.sha256_base64)
+						}
+					},
+					_ => {
+						let mut moves = parse_pgn_to_rust_struct(old_pgn_str);
+						
+						if moves.moves.len() > 0 {
+							if log_enabled!(Level::Info) {
+								info!("{} {} - {} {} {}",
+									moves.get_header("White".to_string()),
+									moves.get_header("WhiteElo".to_string()),
+									moves.get_header("Black".to_string()),
+									moves.get_header("BlackElo".to_string()),
+									moves.get_header("Result".to_string()),
+								);
+							}
+							
+							if log_enabled!(Level::Info) {
+								info!("pgn not in db, inserting");
+							}
+							
+							let result = pgns.insert_one(pgn_with_digest.into(), None).await;
+				
+							match result {
+								Ok(_) => {
+									if log_enabled!(Level::Info) {
+										info!("pgn inserted ok")
+									}
+								},
+								Err(err) => {
+									if log_enabled!(Level::Error) {
+										error!("inserting pgn failed {:?}", err)
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }
 
