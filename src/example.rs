@@ -32,6 +32,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 	let mut mongobook = MongoBook::new();
 
 	mongobook.connect().await;
+
+	println!("{}", mongobook);
 	
 	Ok(())
 }

@@ -53,8 +53,12 @@ where T: core::fmt::Display {
 //////////////////////////////////////////////////////////////////
 
 pub struct MongoBook {
+	/// mongodb uri
 	mongodb_uri: String,
+	/// client
 	client: Option<Client>,
+	/// max book depth in plies
+	book_depth: usize,
 }
 
 impl MongoBook {
@@ -63,6 +67,7 @@ impl MongoBook {
 		MongoBook {
 			mongodb_uri: env_string_or("MONGODB_URI", "mongodb://localhost:27017"),
 			client: None,
+			book_depth: env_usize_or("BOOK_DEPTH", 40),
 		}
 	}
 
@@ -73,4 +78,10 @@ impl MongoBook {
 			_ => self.client = None
 		}		
 	}
+}
+
+impl std::fmt::Display for MongoBook {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("MongoBook\n-> uri = {}\n-> book depth = {}", self.mongodb_uri, self.book_depth))
+    }
 }
