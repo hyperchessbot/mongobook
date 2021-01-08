@@ -1,6 +1,8 @@
 #![allow(unused_imports)]
 
 use log::{log_enabled, debug, info, Level};
+use mongodb::bson::{doc, Document, Bson};
+use ring::{digest};
 
 /// get environment variable as string with default
 pub fn env_string_or<T, D>(key: T, default: D) -> String
@@ -20,6 +22,47 @@ where T: core::fmt::Display {
 	match std::env::var(&key) {
 		Ok(value) => value.parse::<usize>().unwrap_or(default),
 		_ => default
+	}
+}
+
+/// pgn with digest
+#[derive(Debug)]
+struct PgnWithDigest {	
+	pgn_str: String,
+	sha256_base64: String,
+}
+
+/// convert pgn with digest to bson
+impl From<PgnWithDigest> for Document {
+	fn from(pgn_with_digest: PgnWithDigest) -> Self {
+        doc!{"_id": pgn_with_digest.sha256_base64, "pgn": pgn_with_digest.pgn_str}
+    }
+}
+
+/// convert bson to pgn with digest
+impl From<Document> for PgnWithDigest {
+	fn from(document: Document) -> Self {
+        PgnWithDigest{
+			pgn_str: document.get("pgn").and_then(Bson::as_str).unwrap_or("").to_string(),
+			sha256_base64: document.get("_id").and_then(Bson::as_str).unwrap_or("").to_string(),
+		}
+    }
+}
+
+/// display pgn with digest
+impl std::fmt::Display for PgnWithDigest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("pgn = {}\nsha256(base64) = {}", self.pgn_str, self.sha256_base64))
+    }
+}
+
+/// pgn with digest from display
+impl From<&str> for PgnWithDigest {
+	fn from(pgn_str: &str) -> Self {
+		PgnWithDigest {
+			pgn_str: pgn_str.to_string(),
+			sha256_base64: base64::encode(digest::digest(&digest::SHA256, pgn_str.as_bytes()).as_ref()),
+		}
 	}
 }
 
@@ -80,6 +123,7 @@ impl MongoBook {
 	}
 }
 
+/// display for MongoBook
 impl std::fmt::Display for MongoBook {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("MongoBook\n-> uri = {}\n-> book depth = {}", self.mongodb_uri, self.book_depth))
