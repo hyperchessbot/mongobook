@@ -144,6 +144,14 @@ impl MongoBook {
 							moves.get_header("BlackElo".to_string()),
 							moves.get_header("Result".to_string()),
 						);
+
+						for i in process_from..process_to {
+							let m = moves.moves[i];
+
+							if log_enabled!(Level::Info) {
+								info!("adding move {}", m.san);
+							}
+						}
 					}
 				}		
 				
