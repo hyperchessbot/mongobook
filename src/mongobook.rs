@@ -103,6 +103,8 @@ pub struct MongoBook {
 	client: Option<Client>,
 	/// max book depth in plies
 	book_depth: usize,
+	/// book db
+	book_db: String
 }
 
 impl MongoBook {
@@ -112,6 +114,7 @@ impl MongoBook {
 			mongodb_uri: env_string_or("MONGODB_URI", "mongodb://localhost:27017"),
 			client: None,
 			book_depth: env_usize_or("BOOK_DEPTH", 40),
+			book_db: env_string_or("BOOK_DB", "rustbook"),
 		}
 	}
 
@@ -133,7 +136,7 @@ impl MongoBook {
 				info!("dropping {}", coll);
 			}
 
-			match client.database("rustbook").collection(&coll).drop(None).await {
+			match client.database(&self.book_db).collection(&coll).drop(None).await {
 				Ok(_) => {
 					if log_enabled!(Level::Info) {
 						info!("{} dropped ok", coll);
@@ -158,7 +161,7 @@ impl MongoBook {
 				info!("adding pgn of size {} to book", all_pgn.len());
 			}
 
-			let db = client.database("rustbook");
+			let db = client.database(&self.book_db);
 			let pgns = db.collection("pgns");
 
 			let mut items:Vec<&str> = all_pgn.split("\r\n\r\n\r\n").collect();	
