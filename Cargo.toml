@@ -1,6 +1,6 @@
 [package]
 name = "mongobook"
-version = "0.1.7"
+version = "0.1.8"
 authors = ["hyperchessbot <hyperchessbot@gmail.com>"]
 edition = "2018"
 keywords = ["mongodb", "chess", "opening", "book"]
@@ -8,7 +8,7 @@ description = "Mongodb hosted chess opening book. Under construction."
 license = "MIT"
 repository = "https://github.com/hyperchessbot/mongobook"
 homepage = "https://github.com/hyperchessbot/mongobook#mongobook"
-documentation = "https://docs.rs/mongobook/0.1.7"
+documentation = "https://docs.rs/mongobook/0.1.8"
 readme = "ReadMe.md"
 
 [dependencies]
