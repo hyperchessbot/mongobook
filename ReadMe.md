@@ -43,7 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
 # Logging
 
-```
+```bash
 export RUST_LOG=info
 # or 
 export RUST_LOG=debug
