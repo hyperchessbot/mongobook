@@ -39,32 +39,40 @@ struct PgnWithDigest {
 	processed_depth: i32,
 }
 
-/// convert pgn with digest to bson
-impl From<PgnWithDigest> for Document {
-	fn from(pgn_with_digest: PgnWithDigest) -> Self {
-        match bson::to_bson(&pgn_with_digest) {
-        	Ok(bson) => {
-        		match bson {
-        			bson::Bson::Document(doc) => doc,
-        			_ => {
+/// conversion macro
+macro_rules! convert_to_bson {
+	($($type: ty, $typename: tt),*) => {
+		$(
+		impl From<$type> for Document {
+			fn from(item: $type) -> Self {
+		        match bson::to_bson(&item) {
+		        	Ok(bson) => {
+		        		match bson {
+		        			bson::Bson::Document(doc) => doc,
+		        			_ => {
+				        		if log_enabled!(Level::Error) {
+									error!("could not convert {} to bson ( conversion result was not a document )", $typename);
+								}		
+
+				        		doc!()
+				        	}
+		        		}
+		        	},
+		        	Err(err) => {
 		        		if log_enabled!(Level::Error) {
-							error!("could not convert pgn with digest to bson ( conversion result was not a document )");
+							error!("could not convert {} to bson ( fatal ) {:?}", $typename, err);
 						}		
 
 		        		doc!()
 		        	}
-        		}
-        	},
-        	Err(err) => {
-        		if log_enabled!(Level::Error) {
-					error!("could not convert pgn with digest to bson ( fatal ) {:?}", err);
-				}		
-
-        		doc!()
-        	}
-        }
-    }
+		        }
+		    }
+		}
+		)*
+	}
 }
+
+convert_to_bson!(PgnWithDigest, "PgnWithDigest");
 
 /// convert bson to pgn with digest
 impl From<Document> for PgnWithDigest {
