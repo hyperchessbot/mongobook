@@ -146,7 +146,7 @@ impl MongoBook {
 						);
 
 						for i in process_from..process_to {
-							let m = moves.moves[i];
+							let m = &moves.moves[i];
 
 							if log_enabled!(Level::Info) {
 								info!("adding move {}", m.san);
