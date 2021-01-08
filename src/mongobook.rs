@@ -39,7 +39,7 @@ struct PgnWithDigest {
 	processed_depth: i32,
 }
 
-/// conversion macro
+/// conversion macro to bson
 macro_rules! convert_to_bson {
 	($($type: ty, $typename: tt),*) => {
 		$(
@@ -72,19 +72,29 @@ macro_rules! convert_to_bson {
 	}
 }
 
+// generate to bson conversion
 convert_to_bson!(PgnWithDigest, "PgnWithDigest");
 
-/// convert bson to pgn with digest
-impl From<Document> for PgnWithDigest {
-	fn from(document: Document) -> Self {
-        match bson::from_bson(bson::Bson::Document(document)){
-        	Ok(result) => result,
-        	Err(err) => {
-				panic!("could not deserialize to pgn with digest {:?}", err)
-        	}
-        }
-    }
+/// conversion macro from bson
+macro_rules! convert_from_bson {
+	($($type: ty, $typename: tt),*) => {
+		$(
+		impl From<Document> for $type {
+			fn from(item: Document) -> Self {
+		        match bson::from_bson(bson::Bson::Document(item)){
+		        	Ok(result) => result,
+		        	Err(err) => {
+						panic!("could not deserialize doc to {} {:?}", $typename, err)
+		        	}
+		        }
+		    }
+		}
+		)*
+	}
 }
+
+// generate from bson conversion
+convert_from_bson!(PgnWithDigest, "PgnWithDigest");
 
 /// display pgn with digest
 impl std::fmt::Display for PgnWithDigest {
