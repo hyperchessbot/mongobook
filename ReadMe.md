@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
 	//mongobook.drop_coll("pgns").await;
 
-	//mongobook.add_pgn_to_book(pgn).await;
+	mongobook.add_pgn_to_book(pgn).await;
 	
 	Ok(())
 }

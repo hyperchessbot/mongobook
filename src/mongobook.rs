@@ -4,6 +4,7 @@ use log::{log_enabled, error, warn, debug, info, Level};
 use mongodb::bson::{doc, Document, Bson};
 use ring::{digest};
 use pgnparse::parser::*;
+use serde::{Serialize, Deserialize};
 
 /// get environment variable as string with default
 pub fn env_string_or<T, D>(key: T, default: D) -> String
@@ -27,23 +28,40 @@ where T: core::fmt::Display {
 }
 
 /// pgn with digest
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 struct PgnWithDigest {	
 	/// pgn as string
 	pgn_str: String,
 	/// sha256 of pgn as base64
+	#[serde(rename(serialize = "_id", deserialize = "_id"))]
 	sha256_base64: String,
 	/// processed depth
-	processed_depth: usize,
+	processed_depth: i32,
 }
 
 /// convert pgn with digest to bson
 impl From<PgnWithDigest> for Document {
 	fn from(pgn_with_digest: PgnWithDigest) -> Self {
-        doc!{
-        	"_id": pgn_with_digest.sha256_base64,
-        	"pgn": pgn_with_digest.pgn_str,
-        	"processed_depth": processed_depth,
+        match bson::to_bson(&pgn_with_digest) {
+        	Ok(bson) => {
+        		match bson {
+        			bson::Bson::Document(doc) => doc,
+        			_ => {
+		        		if log_enabled!(Level::Error) {
+							error!("could not convert pgn with digest to bson ( conversion result was not a document )");
+						}		
+
+		        		doc!()
+		        	}
+        		}
+        	},
+        	Err(err) => {
+        		if log_enabled!(Level::Error) {
+					error!("could not convert pgn with digest to bson ( fatal ) {:?}", err);
+				}		
+
+        		doc!()
+        	}
         }
     }
 }
@@ -51,11 +69,12 @@ impl From<PgnWithDigest> for Document {
 /// convert bson to pgn with digest
 impl From<Document> for PgnWithDigest {
 	fn from(document: Document) -> Self {
-        PgnWithDigest{
-			pgn_str: document.get("pgn").and_then(Bson::as_str).unwrap_or("").to_string(),
-			sha256_base64: document.get("_id").and_then(Bson::as_str).unwrap_or("").to_string(),
-			processed_depth: document.get("processed_depth").and_then(Bson::as_usize).unwrap_or(0),
-		}
+        match bson::from_bson(bson::Bson::Document(document)){
+        	Ok(result) => result,
+        	Err(err) => {
+				panic!("could not deserialize to pgn with digest {:?}", err)
+        	}
+        }
     }
 }
 
@@ -222,12 +241,14 @@ impl MongoBook {
 									moves.get_header("Result".to_string()),
 								);
 							}
+
+							let doc:Document = pgn_with_digest.into();
 							
-							if log_enabled!(Level::Info) {
-								info!("pgn not in db, inserting");
+							if log_enabled!(Level::Info) {								
+								info!("pgn not in db, inserting {:?}", &doc);
 							}
 							
-							let result = pgns.insert_one(pgn_with_digest.into(), None).await;
+							let result = pgns.insert_one(doc, None).await;
 				
 							match result {
 								Ok(_) => {
