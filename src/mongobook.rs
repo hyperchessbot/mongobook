@@ -123,6 +123,31 @@ impl MongoBook {
 		}		
 	}
 
+	/// drop pgns
+	pub async fn drop_coll<T>(&mut self, coll: T)
+	where T: core::fmt::Display {
+		let coll = format!("{}", coll);
+
+		if let Some(client) = &self.client {
+			if log_enabled!(Level::Info) {
+				info!("dropping {}", coll);
+			}
+
+			match client.database("rustbook").collection(&coll).drop(None).await {
+				Ok(_) => {
+					if log_enabled!(Level::Info) {
+						info!("{} dropped ok", coll);
+					}
+				},
+				Err(err) => {
+					if log_enabled!(Level::Error) {
+						error!("dropping {} failed {:?}", coll, err);
+					}
+				}
+			}
+		}
+	}
+
 	/// add pgn to book
 	pub async fn add_pgn_to_book<T>(&mut self, all_pgn: T)
 	where T: core::fmt::Display {

@@ -28,6 +28,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
 	let pgn = std::fs::read_to_string("test.pgn").unwrap();
 
+	mongobook.drop_coll("pgns").await;
+
 	mongobook.add_pgn_to_book(pgn).await;
 	
 	Ok(())
