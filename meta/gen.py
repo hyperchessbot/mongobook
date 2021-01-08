@@ -26,7 +26,7 @@ write_file("src/lib.rs", lib)
 parts = re.split("# Usage\n|# Logging\n", read_file("ReadMe.md"))
 
 readme = parts[0] + "# Usage\n\n```rust\n" + example
-readme = readme + "\n```\n\n" + parts[2]
+readme = readme + "\n```\n\n# Usage\n\n" + parts[2]
 # print(readme)
 write_file("ReadMe.md", readme)
 
