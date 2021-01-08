@@ -118,6 +118,13 @@ impl MongoBook {
 		}
 	}
 
+	/// set book depth and return self
+	pub fn book_depth(mut self, book_depth: usize) -> MongoBook {
+		self.book_depth = book_depth;
+
+		self
+	}
+
 	/// connect
 	pub async fn connect(&mut self) {
 		match connect(&self.mongodb_uri).await {
@@ -233,6 +240,8 @@ impl MongoBook {
 /// display for MongoBook
 impl std::fmt::Display for MongoBook {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("MongoBook\n-> uri = {}\n-> book depth = {}", self.mongodb_uri, self.book_depth))
+        f.write_fmt(format_args!("MongoBook\n-> uri = {}\n-> book depth = {}",
+        	self.mongodb_uri, self.book_depth
+        ))
     }
 }

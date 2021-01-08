@@ -16,7 +16,7 @@
 //!	
 //!	println!("mongobook, under construction");
 //!
-//!	let mut mongobook = MongoBook::new();
+//!	let mut mongobook = MongoBook::new().book_depth(10);
 //!
 //!	mongobook.connect().await;
 //!
@@ -26,7 +26,7 @@
 //!
 //!	//mongobook.drop_coll("pgns").await;
 //!
-//!	mongobook.add_pgn_to_book(pgn).await;
+//!	//mongobook.add_pgn_to_book(pgn).await;
 //!	
 //!	Ok(())
 //!}
