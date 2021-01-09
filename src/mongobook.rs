@@ -7,6 +7,7 @@ use pgnparse::parser::*;
 use serde::{Serialize, Deserialize};
 use mongodb::{Client};
 use mongodb::options::{UpdateOptions};
+use futures::stream::StreamExt;
 
 use crate::models::pgnwithdigest::*;
 use crate::models::bookmove::*;
@@ -96,6 +97,54 @@ impl MongoBook {
 				}
 			}
 		}
+	}
+
+	pub async fn get_moves<T>(&mut self, epd: T) -> std::collections::HashMap::<String, i32>
+	where T: core::fmt::Display {
+		let epd = format!("{}", epd);
+
+		let mut moves = std::collections::HashMap::<String, i32>::new();
+
+		if let Some(client) = &self.client {
+			let result = client.database(&self.book_db).collection("moves").find(doc!{"epd": epd.to_owned()}, None).await;
+
+			match result {
+				Ok(cursor) => {
+					let mut cursor = cursor;
+
+					if log_enabled!(Level::Info) {
+						info!("got cursor for epd {}", &epd);
+					}
+
+					while let Some(doc) = cursor.next().await {
+						match doc {
+							Ok(doc) => {
+								let result_wrt = doc.get_i32("result_wrt").unwrap();
+								let uci = doc.get("uci").unwrap().to_string();
+
+								if let Some(wrt) = moves.get(&uci) {
+									moves.insert(uci, wrt + result_wrt);
+								} else {
+									moves.insert(uci, result_wrt);
+								}
+							},
+							Err(err) => {
+								if log_enabled!(Level::Error) {
+									info!("cursor next failed {:?}", err);
+								}
+							}
+						}
+					}
+				},
+				Err(err) => {
+					if log_enabled!(Level::Error) {
+						error!("getting cursor for {} failed {:?}", &epd, err);
+					}
+				}
+			}
+		}
+
+		moves
 	}
 
 	/// add pgn to book

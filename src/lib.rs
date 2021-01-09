@@ -27,6 +27,10 @@
 //!	//mongobook.drop_coll("pgns").await;
 //!
 //!	mongobook.add_pgn_to_book(pgn).await;
+//!
+//!	let start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -";
+//!
+//!	println!("{:?}", mongobook.get_moves(start_fen).await);
 //!	
 //!	Ok(())
 //!}
