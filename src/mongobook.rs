@@ -291,53 +291,7 @@ impl MongoBook {
 						let filter = doc!{"_id": sha};
 						self.upsert_one("pgns", filter, doc).await;
 					}
-				}		
-				
-				/*match result {
-					Ok(Some(doc)) => {
-						let pgn_with_digest_stored:PgnWithDigest = doc.into();
-
-						if log_enabled!(Level::Info) {
-							info!("pgn already in db {}", pgn_with_digest_stored.sha256_base64)
-						}
-					},
-					_ => {
-						let mut moves = parse_pgn_to_rust_struct(old_pgn_str);
-						
-						if moves.moves.len() > 0 {
-							if log_enabled!(Level::Info) {
-								info!("{} {} - {} {} {}",
-									moves.get_header("White".to_string()),
-									moves.get_header("WhiteElo".to_string()),
-									moves.get_header("Black".to_string()),
-									moves.get_header("BlackElo".to_string()),
-									moves.get_header("Result".to_string()),
-								);
-							}
-
-							let doc:Document = pgn_with_digest.into();
-							
-							if log_enabled!(Level::Info) {								
-								info!("pgn not in db, inserting {:?}", &doc);
-							}
-							
-							let result = pgns.insert_one(doc, None).await;
-				
-							match result {
-								Ok(_) => {
-									if log_enabled!(Level::Info) {
-										info!("pgn inserted ok")
-									}
-								},
-								Err(err) => {
-									if log_enabled!(Level::Error) {
-										error!("inserting pgn failed {:?}", err)
-									}
-								}
-							}
-						}
-					}
-				}*/
+				}
 			}
 		}
 	}
