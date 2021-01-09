@@ -212,22 +212,22 @@ impl MongoBook {
 					}
 
 					if log_enabled!(Level::Info) {
-						let result = match moves.get_header("Result".to_string()).as_str() {
+						let result = match moves.get_header("Result").as_str() {
 							"1-0" => 2,
 							"0-1" => 0,
 							_ => 1
 						};
 
 						info!("pgn of orig variant {} and variant key {} has unprocessed moves from {} to {}\n{} {} - {} {} {}",
-							moves.get_header("Variant".to_string()),
-							get_variant(moves.get_header("Variant".to_string())),
+							moves.get_header("Variant"),
+							get_variant(moves.get_header("Variant")),
 							process_from,
 							process_to,
-							moves.get_header("White".to_string()),
-							moves.get_header("WhiteElo".to_string()),
-							moves.get_header("Black".to_string()),
-							moves.get_header("BlackElo".to_string()),
-							moves.get_header("Result".to_string()),
+							moves.get_header("White"),
+							moves.get_header("WhiteElo"),
+							moves.get_header("Black"),
+							moves.get_header("BlackElo"),
+							moves.get_header("Result"),
 						);
 
 						for i in process_from..process_to {
@@ -248,7 +248,7 @@ impl MongoBook {
 								let uci = m.uci.to_owned();
 
 								let book_move = BookMove{
-									variant: get_variant(moves.get_header("Variant".to_string())),
+									variant: get_variant(moves.get_header("Variant")),
 									sha: sha,
 									epd: epd,
 									san: san,

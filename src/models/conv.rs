@@ -4,7 +4,7 @@ where T: core::fmt::Display {
 	let variant_name = format!("{}", variant_name);
 
 	match variant_name.to_lowercase().as_str() {
-		"antichess" | "anti chess" | "giveaway" => "antichess",
+		"antichess" | "anti chess" | "giveaway" | "give away" => "antichess",
 		"atomic" => "atomic",
 		"chess960" | "chess 960" => "chess960",
 		"crazyhouse" | "crazy house" => "crazyhouse",
