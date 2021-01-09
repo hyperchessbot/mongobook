@@ -1,10 +1,6 @@
-#![allow(unused_imports)]
-
-use log::{log_enabled, error, warn, debug, info, Level};
-use mongodb::bson::{doc, Document, Bson};
-use ring::{digest};
+use log::{log_enabled, error, info, Level};
+use mongodb::bson::{doc, Document};
 use pgnparse::parser::*;
-use serde::{Serialize, Deserialize};
 use mongodb::{Client};
 use mongodb::options::{UpdateOptions};
 use futures::stream::StreamExt;
@@ -15,6 +11,7 @@ use crate::utils::env::*;
 use crate::mongo::operations::*;
 use crate::models::conv::{get_variant};
 
+/// mongo book
 pub struct MongoBook {
 	/// mongodb uri
 	mongodb_uri: String,
@@ -77,6 +74,7 @@ impl MongoBook {
 		}
 	}
 
+	/// upsert one
 	pub async fn upsert_one<T>(&mut self, coll: T, filter: Document, doc: Document)
 	where T: core::fmt::Display {
 		let coll = format!("{}", coll);
@@ -100,6 +98,7 @@ impl MongoBook {
 		}
 	}
 
+	/// get moves for variant and epd
 	pub async fn get_moves<T, V>(&mut self, variant: V, epd: T) -> std::collections::HashMap::<String, i32>
 	where T: core::fmt::Display, V: core::fmt::Display {
 		let variant = format!("{}", variant);
