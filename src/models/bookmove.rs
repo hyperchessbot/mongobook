@@ -5,6 +5,8 @@ use log::{log_enabled, error, Level};
 /// book move
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BookMove {	
+	/// variant
+	pub variant: String,
 	/// sha
 	pub sha: String,
 	/// epd

@@ -1,3 +1,21 @@
+pub fn get_variant<T>(variant_name: T) -> String
+where T: core::fmt::Display {
+	let variant_name = format!("{}", variant_name);
+
+	match variant_name.to_lowercase().as_str() {
+		"antichess" | "giveaway" => "antichess",
+		"atomic" => "atomic",
+		"chess960" => "chess960",
+		"crazyhouse" => "crazyhouse",
+		"fromposition" => "fromposition",
+		"horde" => "horde",
+		"kingofthehill" | "king of the hill" | "koth" => "kingofthehill",		
+		"racingkings" => "racingkings",
+		"threecheck" | "3check" => "threecheck",
+		_ => "standard",
+	}.to_string()
+}
+
 /// conversion macro to bson
 macro_rules! convert_to_bson {
 	($($type: ty, $typename: tt),*) => {

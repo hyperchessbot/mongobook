@@ -13,6 +13,7 @@ use crate::models::pgnwithdigest::*;
 use crate::models::bookmove::*;
 use crate::utils::env::*;
 use crate::mongo::operations::*;
+use crate::models::conv::{get_variant};
 
 pub struct MongoBook {
 	/// mongodb uri
@@ -99,14 +100,19 @@ impl MongoBook {
 		}
 	}
 
-	pub async fn get_moves<T>(&mut self, epd: T) -> std::collections::HashMap::<String, i32>
-	where T: core::fmt::Display {
+	pub async fn get_moves<T, V>(&mut self, variant: V, epd: T) -> std::collections::HashMap::<String, i32>
+	where T: core::fmt::Display, V: core::fmt::Display {
+		let variant = format!("{}", variant);
 		let epd = format!("{}", epd);
 
 		let mut moves = std::collections::HashMap::<String, i32>::new();
 
 		if let Some(client) = &self.client {
-			let result = client.database(&self.book_db).collection("moves").find(doc!{"epd": epd.to_owned()}, None).await;
+			let result = client.database(&self.book_db).collection("moves")
+				.find(doc!{
+					"variant": variant.to_owned(),
+					"epd": epd.to_owned(),					
+				}, None).await;
 
 			match result {
 				Ok(cursor) => {
@@ -122,11 +128,7 @@ impl MongoBook {
 								let result_wrt = doc.get_i32("result_wrt").unwrap();
 								let uci = doc.get("uci").unwrap().to_string();
 
-								if let Some(wrt) = moves.get(&uci) {
-									moves.insert(uci, wrt + result_wrt);
-								} else {
-									moves.insert(uci, result_wrt);
-								}
+								*moves.entry(uci).or_insert(0) += result_wrt;
 							},
 							Err(err) => {
 								if log_enabled!(Level::Error) {
@@ -211,7 +213,15 @@ impl MongoBook {
 					}
 
 					if log_enabled!(Level::Info) {
-						info!("pgn has unprocessed moves from {} to {}\n{} {} - {} {} {}",
+						let result = match moves.get_header("Result".to_string()).as_str() {
+							"1-0" => 2,
+							"0-1" => 0,
+							_ => 1
+						};
+
+						info!("pgn of orig variant {} and variant key {} has unprocessed moves from {} to {}\n{} {} - {} {} {}",
+							moves.get_header("Variant".to_string()),
+							get_variant(moves.get_header("Variant".to_string())),
 							process_from,
 							process_to,
 							moves.get_header("White".to_string()),
@@ -220,12 +230,6 @@ impl MongoBook {
 							moves.get_header("BlackElo".to_string()),
 							moves.get_header("Result".to_string()),
 						);
-
-						let result = match moves.get_header("Result".to_string()).as_str() {
-							"1-0" => 2,
-							"0-1" => 0,
-							_ => 1
-						};
 
 						for i in process_from..process_to {
 							let m = &moves.moves[i];
@@ -245,6 +249,7 @@ impl MongoBook {
 								let uci = m.uci.to_owned();
 
 								let book_move = BookMove{
+									variant: get_variant(moves.get_header("Variant".to_string())),
 									sha: sha,
 									epd: epd,
 									san: san,
