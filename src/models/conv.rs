@@ -1,8 +1,3 @@
-use mongodb::bson::{doc, Document};
-use log::{log_enabled, error, Level};
-
-use super::pgnwithdigest::*;
-
 /// conversion macro to bson
 macro_rules! convert_to_bson {
 	($($type: ty, $typename: tt),*) => {
@@ -36,9 +31,6 @@ macro_rules! convert_to_bson {
 	}
 }
 
-// generate to bson conversion
-convert_to_bson!(PgnWithDigest, "PgnWithDigest");
-
 /// conversion macro from bson
 macro_rules! convert_from_bson {
 	($($type: ty, $typename: tt),*) => {
@@ -56,6 +48,3 @@ macro_rules! convert_from_bson {
 		)*
 	}
 }
-
-// generate from bson conversion
-convert_from_bson!(PgnWithDigest, "PgnWithDigest");

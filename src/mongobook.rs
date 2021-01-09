@@ -6,8 +6,10 @@ use ring::{digest};
 use pgnparse::parser::*;
 use serde::{Serialize, Deserialize};
 use mongodb::{Client};
+use mongodb::options::{UpdateOptions};
 
 use crate::models::pgnwithdigest::*;
+use crate::models::bookmove::*;
 use crate::utils::env::*;
 use crate::mongo::operations::*;
 
@@ -48,7 +50,7 @@ impl MongoBook {
 		}		
 	}
 
-	/// drop pgns
+	/// drop coll
 	pub async fn drop_coll<T>(&mut self, coll: T)
 	where T: core::fmt::Display {
 		let coll = format!("{}", coll);
@@ -67,6 +69,29 @@ impl MongoBook {
 				Err(err) => {
 					if log_enabled!(Level::Error) {
 						error!("dropping {} failed {:?}", coll, err);
+					}
+				}
+			}
+		}
+	}
+
+	pub async fn upsert_one<T>(&mut self, coll: T, filter: Document, doc: Document)
+	where T: core::fmt::Display {
+		let coll = format!("{}", coll);
+
+		if let Some(client) = &self.client {
+			let result = client.database(&self.book_db).collection(&coll)
+				.update_one(filter, doc!{"$set": doc}, UpdateOptions::builder().upsert(true).build()).await;
+
+			match result {
+				Ok(_) => {
+					if log_enabled!(Level::Info) {
+						info!("upserted in {} ok", coll);
+					}
+				},
+				Err(err) => {
+					if log_enabled!(Level::Error) {
+						error!("upsert in {} failed {:?}", coll, err);
 					}
 				}
 			}
@@ -153,8 +178,6 @@ impl MongoBook {
 							_ => 1
 						};
 
-						let movecoll = db.collection("moves");
-
 						for i in process_from..process_to {
 							let m = &moves.moves[i];
 
@@ -168,17 +191,23 @@ impl MongoBook {
 
 							if log_enabled!(Level::Info) {
 								let sha = pgn_with_digest.sha256_base64.to_owned();
+								let epd = m.epd_before.to_owned();
+								let san = m.san.to_owned();
+								let uci = m.uci.to_owned();
 
-								let key = sha + "#" + &m.uci;
-
-								info!("adding move {} with result {} wrt {} key {}", m.san, result, result_wrt, key);
-
-								let doc = doc!{
-									"_id": key,
-									"result_wrt": result_wrt,
+								let book_move = BookMove{
+									sha: sha,
+									epd: epd,
+									san: san,
+									uci: uci,
+									result_wrt: result_wrt,
 								};
 
-								let result = movecoll.insert_one(doc, None).await;
+								info!("adding move {}", book_move);
+
+								let doc:Document = book_move.into();
+
+								let result = db.collection("moves").insert_one(doc, None).await;
 				
 								match result {
 									Ok(_) => {
@@ -205,22 +234,8 @@ impl MongoBook {
 							info!("moves processed ok, updating {:?}", &doc);
 						}
 						
-						// TODO: upsert
 						let filter = doc!{"_id": sha};
-						let result = pgns.update_one(filter, doc!{"$set": doc}, None).await;
-			
-						match result {
-							Ok(_) => {
-								if log_enabled!(Level::Info) {
-									info!("pgn updated ok")
-								}
-							},
-							Err(err) => {
-								if log_enabled!(Level::Error) {
-									error!("updating pgn failed {:?}", err)
-								}
-							}
-						}
+						self.upsert_one("pgns", filter, doc).await;
 					}
 				}		
 				

@@ -1,5 +1,7 @@
 use ring::{digest};
 use serde::{Serialize, Deserialize};
+use mongodb::bson::{doc, Document};
+use log::{log_enabled, error, Level};
 
 /// pgn with digest
 #[derive(Debug, Serialize, Deserialize)]
@@ -32,3 +34,9 @@ impl From<&str> for PgnWithDigest {
 		}
 	}
 }
+
+// generate to bson conversion
+convert_to_bson!(PgnWithDigest, "PgnWithDigest");
+
+// generate from bson conversion
+convert_from_bson!(PgnWithDigest, "PgnWithDigest");
